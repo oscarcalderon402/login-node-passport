@@ -4,10 +4,14 @@ const path = require('path');
 const routes = require('./routes');
 const morgan = require('morgan');
 const db = require('./database');
+const passport = require('passport');
+const session = require('express-session');
+const flash = require('connect-flash');
 
 //INITIALIZATION
 const app = express();
 db();
+require('./passport/local-auth');
 
 //settings
 app.set('views', path.join(__dirname, 'views'));
@@ -18,6 +22,22 @@ app.set('port', process.env.PORT || 3000);
 //middlewares
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: false }));
+app.use(flash());
+app.use(
+  session({
+    secret: 'mysecretsession',
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use((req, res, next) => {
+  app.locals.signupMessage = req.flash('signupMessage');
+  app.locals.signinMessage = req.flash('signinMessage');
+  next();
+});
 
 //Routes
 app.use('/', routes);
